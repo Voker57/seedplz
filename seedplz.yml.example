@@ -1,0 +1,6 @@
+:datapath: /var/trd/data
+:configpath: /var/trd/config
+:torrentpath: /var/trd/torrents
+:maxsize: 62914560
+:port: 666
+:bind: "127.0.0.1"
