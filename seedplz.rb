@@ -23,7 +23,7 @@ helpers do
 		<meta httpequiv='Content-Type' content='text/html; charset=utf-8'></meta></head>
 		<body>"
 		post = "<hr />
-		<p>SeedPlz the experimental torrent-seeding service. Direct your feedback to <a href='mailto:voker57@gmail.com'>voker57@gmail.com</a></p></body></html>"
+		<p>SeedPlz the experimental torrent-seeding service. You upload a file (<60 MB), receive a magnet link and service seeds the torrent for at most 24 hours. Direct your feedback to <a href='mailto:voker57@gmail.com'>voker57@gmail.com</a></p></body></html>"
 		pre + s + post
 	end
 end 
@@ -64,5 +64,6 @@ post '/upload' do
  	hash = SHA1.hexdigest(File.read(torrentname).bdecode["info"].bencode)
  	system("transmission-remote", "-a", torrentname, "-w", datadir)
 	uri = "magnet:?xt=urn:btih:#{hash}&dn=#{URI.encode(realname)}"
-	surround "Success! Your URI is <a href='#{uri}'>#{uri}</a>."
+	surround "Success! Your URI is <br />
+	<a href='#{uri}'>#{uri}</a>."
 end
