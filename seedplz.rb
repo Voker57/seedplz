@@ -5,7 +5,7 @@ require 'yaml'
 require 'open3'
 require 'bencode'
 require 'uri'
-require 'sha1'
+require 'digest/sha1'
 
 configure do
 	Config = YAML.load_file('seedplz.yml')
@@ -61,7 +61,7 @@ post '/upload' do
  	FileUtils.mkdir_p datadir
  	FileUtils.mv tempname, fullname
  	system("transmission-create", fullname, "-o", torrentname)
- 	hash = SHA1.hexdigest(File.read(torrentname).bdecode["info"].bencode)
+ 	hash = Digest::SHA1.hexdigest(File.read(torrentname).bdecode["info"].bencode)
  	system("transmission-remote", "-a", torrentname, "-w", datadir)
 	uri = "magnet:?xt=urn:btih:#{hash}&dn=#{URI.encode(realname)}"
 	surround "Success! Your URI is <br />
