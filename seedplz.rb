@@ -56,9 +56,9 @@ post '/upload' do
 		error "Too fat!"
 	end
 	timestamp = Time.now.strftime("%s")
-	datadir = File.join(Config[:datapath], timestamp)
- 	fullname = File.join(Config[:datapath], timestamp, realname)
- 	torrentname = File.join(Config[:torrentpath], timestamp + ".torrent")
+	datadir = File.join(Config[:trpath], "data", timestamp)
+ 	fullname = File.join(Config[:trpath], "data", timestamp, realname)
+ 	torrentname = Dir::Tmpname.make_tmpname("seedplz", ".torrent")
  	FileUtils.mkdir_p datadir
  	FileUtils.mv tempname, fullname
  	system("transmission-create", fullname, "-o", torrentname)
@@ -68,8 +68,10 @@ post '/upload' do
 	surround "Success! Your URI is <br />
 	<a href='#{uri}'>#{uri}</a>."
 	rescue => e
- 		File.unlink params[:file][:tempfile].path if params[:file].is_a?(Hash) and params[:file][:tempfile].is_a?(Tempfile) and File.exists?(params[:file][:tempfile].path)
+		puts e.backtrace.join("\n")
 		puts e
+ 		File.unlink params[:file][:tempfile].path if params[:file].is_a?(Hash) and params[:file][:tempfile].is_a?(Tempfile) and File.exists?(params[:file][:tempfile].path)
+		File.unlink torrentname if defined? torrentname and torrentname != nil and File.exists? torrentname
 		error "Something bad happened. Sorry"
 	end
 end
