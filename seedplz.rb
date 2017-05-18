@@ -44,6 +44,7 @@ get '/' do
 end
 
 post '/upload' do
+	begin
 	tempname = params[:file][:tempfile].path
 	realname = params[:file][:filename]
 	if realname =~ %r&/|^\.\.&
@@ -66,4 +67,9 @@ post '/upload' do
 	uri = "magnet:?xt=urn:btih:#{hash}&dn=#{URI.encode(realname)}"
 	surround "Success! Your URI is <br />
 	<a href='#{uri}'>#{uri}</a>."
+	rescue => e
+ 		File.unlink params[:file][:tempfile].path if params[:file].is_a?(Hash) and params[:file][:tempfile].is_a?(Tempfile) and File.exists?(params[:file][:tempfile].path)
+		puts e
+		error "Something bad happened. Sorry"
+	end
 end
