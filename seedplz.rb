@@ -6,7 +6,6 @@ require 'open3'
 require 'bencode'
 require 'uri'
 require 'digest/sha1'
-require './common'
 
 configure do
 	Config = YAML.load_file('seedplz.yml')
