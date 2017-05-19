@@ -6,6 +6,7 @@ require 'open3'
 require 'bencode'
 require 'uri'
 require 'digest/sha1'
+require './common'
 
 configure do
 	Config = YAML.load_file('seedplz.yml')
@@ -55,9 +56,20 @@ post '/upload' do
 		File.unlink tempname
 		error "Too fat!"
 	end
-	while `du -bs #{Config[:trpath]}/data`.split(/\s+/)[0].to_i > Config[:max_total_size]
-		`ruby cleanup.rb`
+	tries = 0
+	while `du -bs #{Config[:trpath]}/data`.split(/\s+/)[0].to_i > Config[:max_total_size] and tries < 10
+		candidate = Dir.entries(Config[:trpath]+"/data").sort.reject{|v| v == "." or v == ".."}.first
+		timestamp, hash = candidate.split(":")
+
+		system("transmission-remote", *Seedplz.transargs, "-t", hash, "-rad")
+		puts `find #{Config[:trpath]+"/data"} -type d -empty -exec rm -r {} \\;`
+		tries += 1
 	end
+	if tries >= 10
+		raise "Too much cleanup tries. Smth wrong."
+	end
+	
+	
 	
 	timestamp = Time.now.strftime("%s")
 	datadir = File.join(Config[:trpath], "data", timestamp)
@@ -65,14 +77,17 @@ post '/upload' do
 	FileUtils.mkdir_p datadir
  	FileUtils.mv tempname, fullname
  	torrentname = Dir::Tmpname.make_tmpname("seedplz", ".torrent")
-	system("transmission-create", fullname, "-o", torrentname)
+	
+	
+	system("transmission-create", *Seedplz.transargs, fullname, "-o",  torrentname)
  	hash = Digest::SHA1.hexdigest(File.read(torrentname).bdecode["info"].bencode)
  	
 	FileUtils.mv datadir, File.join(Config[:trpath], "data", timestamp + ":" + hash)
 	
 	datadir = File.join(Config[:trpath], "data", timestamp + ":" + hash)
  	
- 	system("transmission-remote", "-a", torrentname, "-w", datadir)
+ 	system("transmission-remote", *Seedplz.transargs, "-a", torrentname, "-w", datadir)
+	
 	uri = "magnet:?xt=urn:btih:#{hash}&dn=#{URI.encode(realname)}"
 	surround "Success! Your URI is <br />
 	<a href='#{uri}'>#{uri}</a>."
@@ -81,6 +96,9 @@ post '/upload' do
 		puts e.backtrace.join("\n")
  		File.unlink params[:file][:tempfile].path if params[:file].is_a?(Hash) and params[:file][:tempfile].is_a?(Tempfile) and File.exists?(params[:file][:tempfile].path)
 		File.unlink torrentname if defined? torrentname and torrentname != nil and File.exists? torrentname
+		
+		FileUtils.rm_r File.join(Config[:trpath], "data", timestamp) if defined? timestamp and timestamp != nil and File.exists?(File.join(Config[:trpath], "data", timestamp))
+
 		error "Something bad happened. Sorry"
 	end
 end
