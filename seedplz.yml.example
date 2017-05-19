@@ -1,6 +1,11 @@
-:datapath: /var/trd/data
-:configpath: /var/trd/config
-:torrentpath: /var/trd/torrents
-:maxsize: 62914560
-:port: 666
+:trpath: /home/seedplz/seedplz
+:maxsize: 2.0e+9
+:max_total_size: 10.0e+6
+:port: 4006
 :bind: "127.0.0.1"
+:transmission:
+  :password: "{b6e7c975942c8647cfgf61c2d797f3fd3z95b049vSJwLL7R"
+  :host: localhost
+  :port: 9091
+  :netrc: .netrc
+:motd: "Upload a file, get torrent of it. Max size: 2GB"
