@@ -7,11 +7,13 @@ require 'bencode'
 require 'uri'
 require 'digest/sha1'
 
+class SeedplzApp < Sinatra::Base
+
 configure do
-	Config = YAML.load_file('seedplz.yml')
+	Seedplz.config = YAML.load_file('seedplz.yml')
 	set :sessions, false
-	set :port, Config[:port]
-	set :bind, Config[:bind]
+	set :port, Seedplz.config[:port]
+	set :bind, Seedplz.config[:bind]
 end
 
 helpers do
@@ -23,7 +25,7 @@ helpers do
 		<meta httpequiv='Content-Type' content='text/html; charset=utf-8'></meta></head>
 		<body>"
 		post = "<hr />
-		<p>"+Config[:motd].to_s+"</p></body></html>"
+		<p>"+Seedplz.config[:motd].to_s+"</p></body></html>"
 		pre + s + post
 	end
 	
@@ -61,7 +63,7 @@ post '/upload' do
 	if realname =~ %r&/|^\.\.&
 		error "Baaad name"
 	end
-	if params[:file][:tempfile].size > Config[:maxsize]
+	if params[:file][:tempfile].size > Seedplz.config[:maxsize]
 		error "Too fat!"
 	end
 	
@@ -81,23 +83,23 @@ post '/upload' do
 	
 	hash = Digest::SHA1.hexdigest(File.read(torrentname).bdecode["info"].bencode)
 	
-	if !File.exists?("#{Config[:trpath]}/data/#{hash}")
+	if !File.exists?("#{Seedplz.config[:trpath]}/data/#{hash}")
 	
 		tries = 0
-		while `du -bs #{Config[:trpath]}/data`.split(/\s+/)[0].to_i > Config[:max_total_size] and tries < 10
-			candidate = Dir.glob(Config[:trpath]+"/data/*").sort_by {|f| File.stat(f).mtime}.first
+		while `du -bs #{Seedplz.config[:trpath]}/data`.split(/\s+/)[0].to_i > Seedplz.config[:max_total_size] and tries < 10
+			candidate = Dir.glob(Seedplz.config[:trpath]+"/data/*").sort_by {|f| File.stat(f).mtime}.first
 			
 			c_hash = candidate.split("/").last
 
 			system("transmission-remote", *Seedplz.transargs, "-t", c_hash, "-rad") or raise "execution failed"
-			puts `find #{Config[:trpath]+"/data"} -type d -empty -exec rm -r {} \\;`
+			puts `find #{Seedplz.config[:trpath]+"/data"} -type d -empty -exec rm -r {} \\;`
 			tries += 1
 		end
 		if tries >= 10
 			raise "Too much cleanup tries. Smth wrong."
 		end
 		
-		datadir = File.join(Config[:trpath], "data", hash)
+		datadir = File.join(Seedplz.config[:trpath], "data", hash)
 		temps << datadir
 		fullname = File.join(datadir, realname)
 		
@@ -122,4 +124,6 @@ post '/upload' do
 		
 		error "Something bad happened. Sorry"
 	end
+end
+
 end
