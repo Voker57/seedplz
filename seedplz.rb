@@ -6,6 +6,7 @@ require 'open3'
 require 'bencode'
 require 'uri'
 require 'digest/sha1'
+require './common'
 
 class SeedplzApp < Sinatra::Base
 
