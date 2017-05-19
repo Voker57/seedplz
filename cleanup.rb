@@ -15,3 +15,4 @@ if current_size > Config[:max_total_size]
 	`transmission-remote -t #{hash} -rad`
 end
 
+`find #{Config[:trpath]}/data -type d -empty -exec rm -r {} \\;`
