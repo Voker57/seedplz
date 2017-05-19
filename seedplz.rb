@@ -55,14 +55,23 @@ post '/upload' do
 		File.unlink tempname
 		error "Too fat!"
 	end
+	while `du -bs #{Config[:trpath]}/data`.split(/\s+/)[0].to_i > Config[:max_total_size]
+		`ruby cleanup.rb`
+	end
+	
 	timestamp = Time.now.strftime("%s")
 	datadir = File.join(Config[:trpath], "data", timestamp)
- 	fullname = File.join(Config[:trpath], "data", timestamp, realname)
- 	torrentname = Dir::Tmpname.make_tmpname("seedplz", ".torrent")
- 	FileUtils.mkdir_p datadir
+	fullname = File.join(datadir, realname)
+	FileUtils.mkdir_p datadir
  	FileUtils.mv tempname, fullname
- 	system("transmission-create", fullname, "-o", torrentname)
+ 	torrentname = Dir::Tmpname.make_tmpname("seedplz", ".torrent")
+	system("transmission-create", fullname, "-o", torrentname)
  	hash = Digest::SHA1.hexdigest(File.read(torrentname).bdecode["info"].bencode)
+ 	
+	FileUtils.mv datadir, File.join(Config[:trpath], "data", timestamp + ":" + hash)
+	
+	datadir = File.join(Config[:trpath], "data", timestamp + ":" + hash)
+ 	
  	system("transmission-remote", "-a", torrentname, "-w", datadir)
 	uri = "magnet:?xt=urn:btih:#{hash}&dn=#{URI.encode(realname)}"
 	surround "Success! Your URI is <br />
