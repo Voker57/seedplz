@@ -68,8 +68,8 @@ post '/upload' do
 	surround "Success! Your URI is <br />
 	<a href='#{uri}'>#{uri}</a>."
 	rescue => e
-		puts e.backtrace.join("\n")
 		puts e
+		puts e.backtrace.join("\n")
  		File.unlink params[:file][:tempfile].path if params[:file].is_a?(Hash) and params[:file][:tempfile].is_a?(Tempfile) and File.exists?(params[:file][:tempfile].path)
 		File.unlink torrentname if defined? torrentname and torrentname != nil and File.exists? torrentname
 		error "Something bad happened. Sorry"
